@@ -1,0 +1,19 @@
+[package]
+name = "appointments"
+version = "0.1.0"
+authors = ["morgan <a@morganrhil.com>"]
+edition = "2018"
+license = "AGPL-3.0-or-later"
+
+[[bin]]
+name="appointments-server"
+path="./src/appointments-server.rs"
+
+[dependencies]
+tonic = "0.4"
+prost = "0.7"
+prost-types = "0.7"
+tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
+
+[build-dependencies]
+tonic-build = "0.4" 
