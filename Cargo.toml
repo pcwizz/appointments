@@ -5,15 +5,25 @@ authors = ["morgan <a@morganrhil.com>"]
 edition = "2018"
 license = "AGPL-3.0-or-later"
 
+[lib]
+name="appointments"
+path="./src/lib.rs"
+
 [[bin]]
-name="appointments-server"
-path="./src/appointments-server.rs"
+name="appointments-giver"
+path="./src/bin/appointments-giver.rs"
+
+[[bin]]
+name="appointments-giver-tests"
+path="./src/bin/appointments-giver-tests.rs"
 
 [dependencies]
 tonic = "0.4"
 prost = "0.7"
 prost-types = "0.7"
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
+diesel = { version = "1.4", features = ["postgres", "r2d2", "uuid"] }
+uuid = "0.6"
 
 [build-dependencies]
 tonic-build = "0.4" 

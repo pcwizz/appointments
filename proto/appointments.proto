@@ -29,11 +29,15 @@ service AppointmentGiver {
 
 message GetLocationsRequest {}
 
+message Location {
+	Uuid id = 1;
+	string name = 2;
+	string address = 3;
+	string phone = 4;
+}
+
 message GetLocationsReply {
-	Locations locations = 1;
-	message Locations {
-		repeated string location = 1;
-	}
+	repeated Location location = 1;
 }
 
 message TimeSpan {
@@ -42,7 +46,7 @@ message TimeSpan {
 }
 
 message GetAvailabilityRequest {
-	repeated string Location = 1;
+	repeated Uuid Location = 1;
 	TimeSpan timespan = 2;
 }
 
@@ -55,7 +59,9 @@ message Slot {
 	TimeSpan timespan = 2;
 	uint32 capacity = 3;
 	uint32 availability = 4;
-	// capcity - availability = taken
+	Uuid locationId = 5;
+	string locationName = 6;
+	// capacity - availability = taken
 }
 
 message GetAvailabilityReply {
@@ -72,6 +78,7 @@ message BookAppointmentRequest {
 message Appointment {
 	Uuid uuid = 1;
 	Slot slot = 2;
+	int32 humanId = 3;
 }
 
 message BookAppointmentReply {
@@ -79,7 +86,8 @@ message BookAppointmentReply {
 }
 
 message GetAppointmentRequest {
-	Uuid appointment = 1;
+	int32 appointment = 1;// humman id
+	Uuid location = 2;
 }
 
 message GetAppointmentReply {

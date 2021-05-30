@@ -13,29 +13,46 @@
 
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 use tonic::{transport::Server, Request, Response, Status};
 
-use appointments::appointment_giver_server::{AppointmentGiver, AppointmentGiverServer};
-use appointments::{
+use crate::diesel;
+use crate::model;
+use crate::schema;
+use crate::utils::PgPool;
+
+use crate::appointments::appointment_giver_server::{AppointmentGiver, AppointmentGiverServer};
+use crate::appointments::{
     BookAppointmentReply, BookAppointmentRequest, CancelAppointmentReply, CancelAppointmentRequest,
     GetAppointmentReply, GetAppointmentRequest, GetAvailabilityReply, GetAvailabilityRequest,
     GetLocationsReply, GetLocationsRequest,
 };
 
-pub mod appointments {
-    tonic::include_proto!("appointments");
+pub struct MyAppointmentGiver {
+    db: PgPool,
 }
 
-#[derive(Debug, Default)]
-pub struct MyAppointmentGiver {}
+impl MyAppointmentGiver {
+    fn new(pool: PgPool) -> MyAppointmentGiver {
+        MyAppointmentGiver { db: pool }
+    }
+}
 
 #[tonic::async_trait]
 impl AppointmentGiver for MyAppointmentGiver {
     async fn get_locations(
         &self,
-        request: Request<GetLocationsRequest>,
+        _request: Request<GetLocationsRequest>,
     ) -> Result<Response<GetLocationsReply>, Status> {
-        unimplemented!()
+        use diesel::RunQueryDsl;
+        use schema::locations;
+        let result = locations::table
+            .load::<model::Location>(&self.db.get().unwrap())
+            .unwrap();
+
+        Ok(tonic::Response::new(GetLocationsReply {
+            location: result.iter().map(|x| x.into()).collect(),
+        }))
     }
 
     async fn get_availability(
@@ -67,15 +84,14 @@ impl AppointmentGiver for MyAppointmentGiver {
     }
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "[::1]:50051".parse()?;
-    let appointmentGiver = MyAppointmentGiver::default();
+pub async fn server(db_pool: PgPool, addr: String) -> Result<(), Box<dyn std::error::Error>> {
+    let addr_parsed = addr.parse()?;
+
+    let appointment_giver = MyAppointmentGiver::new(db_pool);
 
     Server::builder()
-        .add_service(AppointmentGiverServer::new(appointmentGiver))
-        .serve(addr)
+        .add_service(AppointmentGiverServer::new(appointment_giver))
+        .serve(addr_parsed)
         .await?;
-
     Ok(())
 }
