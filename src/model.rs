@@ -51,3 +51,43 @@ impl From<&crate::appointments::Location> for Location {
         }
     }
 }
+
+#[derive(Queryable)]
+pub struct Slot {
+    pub id: uuid::Uuid,
+    pub start_time: std::time::SystemTime,
+    pub end_time: std::time::SystemTime,
+    pub location: uuid::Uuid,
+    pub capacity: i32,
+}
+
+#[derive(Queryable)]
+pub struct SlotView {
+    pub id: uuid::Uuid,
+    pub start_time: std::time::SystemTime,
+    pub end_time: std::time::SystemTime,
+    pub location_id: uuid::Uuid,
+    pub location_name: String,
+    pub capacity: i32,
+    pub availability: i32,
+}
+
+impl From<&SlotView> for crate::appointments::Slot {
+    fn from(item: &SlotView) -> Self {
+        crate::appointments::Slot {
+            uuid: Some(crate::appointments::Uuid {
+                uuid: item.id.to_string(),
+            }),
+            timespan: Some(crate::appointments::TimeSpan {
+                start: Some(item.start_time.into()),
+                end: Some(item.end_time.into()),
+            }),
+            location_id: Some(crate::appointments::Uuid {
+                uuid: item.id.to_string(),
+            }),
+            location_name: item.location_name.clone(),
+            capacity: item.capacity,
+            availability: item.availability,
+        }
+    }
+}

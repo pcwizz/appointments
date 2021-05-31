@@ -20,6 +20,7 @@ use crate::diesel;
 use crate::model;
 use crate::schema;
 use crate::utils::PgPool;
+use diesel::prelude::*;
 
 use crate::appointments::appointment_giver_server::{AppointmentGiver, AppointmentGiverServer};
 use crate::appointments::{
@@ -46,9 +47,19 @@ impl AppointmentGiver for MyAppointmentGiver {
     ) -> Result<Response<GetLocationsReply>, Status> {
         use diesel::RunQueryDsl;
         use schema::locations;
-        let result = locations::table
-            .load::<model::Location>(&self.db.get().unwrap())
-            .unwrap();
+        let db = self.db.get();
+        if let Err(err) = db {
+            println!("Database connection err: {}", err);
+            return Err(Status::internal("Database connection error"));
+        }
+        let db = db.unwrap();
+
+        let result = locations::table.load::<model::Location>(&db);
+        if let Err(err) = result {
+            println!("Database error: {}", err);
+            return Err(Status::internal("Database query error"));
+        }
+        let result = result.unwrap();
 
         Ok(tonic::Response::new(GetLocationsReply {
             location: result.iter().map(|x| x.into()).collect(),
@@ -59,7 +70,69 @@ impl AppointmentGiver for MyAppointmentGiver {
         &self,
         request: Request<GetAvailabilityRequest>,
     ) -> Result<Response<GetAvailabilityReply>, Status> {
-        unimplemented!()
+        use schema::slots_view::dsl::*;
+
+        let request = request.into_inner();
+
+        let (locations, errors): (Vec<_>, Vec<_>) = request
+            .location
+            .iter()
+            .map(|l| l.uuid.parse::<uuid::Uuid>())
+            .partition(Result::is_ok);
+        if errors.len() > 0 {
+            return Err(Status::invalid_argument("Location ID is not a valid uuid"));
+        }
+        let locations: Vec<_> = locations
+            .iter()
+            .map(|l| Result::unwrap(l.to_owned()))
+            .collect();
+
+        let timespan = request.timespan;
+        if timespan.is_none() {
+            return Err(Status::invalid_argument("Timespan must be set"));
+        }
+        let timespan = timespan.unwrap();
+
+        let start = timespan.start;
+        if start.is_none() {
+            return Err(Status::invalid_argument("Start must be set in timespan"));
+        }
+        let start: std::time::SystemTime = start.unwrap().into();
+        let end = timespan.end;
+        if end.is_none() {
+            return Err(Status::invalid_argument("End must be set in timespan"));
+        }
+        let end: std::time::SystemTime = end.unwrap().into();
+
+        let db = self.db.get();
+        if let Err(err) = db {
+            println!("Database connection err: {}", err);
+            return Err(Status::internal("Database connection error"));
+        }
+        let db = db.unwrap();
+
+        let result = slots_view
+            .filter(
+                location_id
+                    .eq_any::<Vec<uuid::Uuid>>(locations)
+                    .and(
+                        start_time
+                            .between(start, end)
+                            .or(end_time.between(start, end)),
+                    )
+                    .and(availability.gt(0)),
+            )
+            .load::<model::SlotView>(&db);
+        if let Err(err) = result {
+            println!("Database error: {}", err);
+            return Err(Status::internal("Database query error"));
+        }
+        let result = result.unwrap();
+        Ok(tonic::Response::new(GetAvailabilityReply {
+            availability: Some(crate::appointments::get_availability_reply::Availability {
+                slot: result.iter().map(|a| a.into()).collect(),
+            }),
+        }))
     }
 
     async fn book_appointment(

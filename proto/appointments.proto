@@ -57,8 +57,8 @@ message Uuid {
 message Slot {
 	Uuid uuid = 1;
 	TimeSpan timespan = 2;
-	uint32 capacity = 3;
-	uint32 availability = 4;
+	int32 capacity = 3;
+	int32 availability = 4;
 	Uuid locationId = 5;
 	string locationName = 6;
 	// capacity - availability = taken

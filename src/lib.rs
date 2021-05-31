@@ -19,11 +19,7 @@ extern crate diesel;
 extern crate uuid;
 
 pub mod giver;
-#[cfg(test)]
-mod giver_test;
 pub mod model;
-#[cfg(test)]
-mod model_test;
 pub mod schema;
 pub mod utils;
 
