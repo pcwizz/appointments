@@ -14,7 +14,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#[derive(Queryable)]
+use crate::schema::{locations, slots};
+
+#[derive(Queryable, Insertable)]
 pub struct Location {
     pub id: uuid::Uuid,
     pub name: String,
@@ -52,7 +54,7 @@ impl From<&crate::appointments::Location> for Location {
     }
 }
 
-#[derive(Queryable)]
+#[derive(Queryable, Insertable)]
 pub struct Slot {
     pub id: uuid::Uuid,
     pub start_time: std::time::SystemTime,

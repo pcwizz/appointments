@@ -111,6 +111,7 @@ impl AppointmentGiver for MyAppointmentGiver {
         }
         let db = db.unwrap();
 
+        println!("start: {:?} end: {:?}", start, end);
         let result = slots_view
             .filter(
                 location_id

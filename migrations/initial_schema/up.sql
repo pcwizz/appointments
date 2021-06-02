@@ -54,6 +54,6 @@ CREATE VIEW slots_view AS
 		slots.location AS location_id, 
 		locations.name AS location_name, 
 		slots.capacity AS capacity,
-		slots.capacity - (SELECT COUNT(*) FROM appointments WHERE slot = slots.id) AS availability
+		slots.capacity - (SELECT COUNT(*) FROM appointments WHERE slot = slots.id)::INTEGER AS availability
 	FROM slots
 	INNER JOIN locations ON slots.location = locations.id;

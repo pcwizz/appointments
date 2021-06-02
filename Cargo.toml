@@ -17,6 +17,10 @@ path="./src/bin/appointments-giver.rs"
 name="appointments-giver-tests"
 path="./src/bin/appointments-giver-tests.rs"
 
+[[bin]]
+name="populate-example-data"
+path="./src/bin/populate-example-data.rs"
+
 [dependencies]
 tonic = "0.4"
 prost = "0.7"

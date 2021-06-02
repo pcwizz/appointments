@@ -56,7 +56,6 @@ impl TestError {
 async fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
-        println!();
         return Err(
             TestError::new("Expected one argument: the address of the appointment giver").into(),
         );
@@ -98,7 +97,6 @@ async fn test_happy_path(
         })
         .await?
         .into_inner();
-    println!("{:?}", availability);
 
     let slots = availability
         .availability
@@ -106,6 +104,7 @@ async fn test_happy_path(
     if slots.slot.len() == 0 {
         return Ok(());
     }
+    println!("{:?}", slots);
     let mut my_appointment = Appointment {
         human_id: 0,
         slot: None,
